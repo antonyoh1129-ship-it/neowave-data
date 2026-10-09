@@ -1,0 +1,21 @@
+name: update-data-multi
+on:
+  schedule:
+    - cron: "45 0 * * *"   # daily 00:45 UTC (BTC 수집 30분 뒤)
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 fetch_multi.py
+      - run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add Bitstamp_*USD_15m.csv
+          git diff --cached --quiet || git commit -m "data: multi 15m update"
+          git pull --rebase
+          git push
