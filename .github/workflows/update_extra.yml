@@ -1,0 +1,24 @@
+name: update-data-extra
+on:
+  schedule:
+    - cron: "30 3,9,15,21 * * *"   # 6시간마다(기존 00:15·00:45 과 겹치지 않게) — 예약 지연 대비 보조
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: data-commit
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 fetch_15m.py && python3 fetch_multi.py
+      - run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add Bitstamp_*USD_15m.csv
+          git diff --cached --quiet || git commit -m "data: extra 15m update"
+          git pull --rebase
+          git push
